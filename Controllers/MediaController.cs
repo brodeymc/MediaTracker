@@ -33,9 +33,19 @@ namespace MediaTrackerAPI.Controllers
             return Ok(item);
         }
 
+        [HttpGet("status/{status}")]
+        public IActionResult GetByStatus(string status)
+        {
+            var items = context.MediaItems.Where(x => x.Status == status).ToList();
+
+            return Ok(items);
+        }
+
         [HttpPost]
         public IActionResult Create(MediaItem item)
         {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+
             item.lastUpdated = DateTime.UtcNow;
 
             context.MediaItems.Add(item);
@@ -47,6 +57,9 @@ namespace MediaTrackerAPI.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(int id, MediaItem updatedItem)
         {
+            if (!ModelState.IsValid) { return BadRequest(ModelState); }
+            if (id != updatedItem.Id) { return BadRequest(); }
+
             var item = context.MediaItems.Find(id);
 
             if (item == null) { return NotFound(); }

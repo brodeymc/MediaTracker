@@ -15,5 +15,8 @@ namespace MediaTrackerAPI.Models
         public string ImageUrl { get; set; } // For custom image upload
         public DateTime lastUpdated { get; set; } = DateTime.UtcNow;
 
+        public int UserId { get; set; }
+        public User User { get; set; }
+
     }
 }

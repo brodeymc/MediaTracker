@@ -1,10 +1,12 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using MediaTrackerAPI.Data;
+﻿using MediaTrackerAPI.Data;
 using MediaTrackerAPI.Models;
-using System.Linq;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 
 namespace MediaTrackerAPI.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
 
@@ -20,15 +22,20 @@ namespace MediaTrackerAPI.Controllers
         [HttpGet]
         public IActionResult GetAll()
         {
-            var items = context.MediaItems.ToList();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            var items = context.MediaItems.Where(x => x.UserId == userId).ToList();
             return Ok(items);
         }
 
         [HttpGet("{id}")]
         public IActionResult GetById(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
             var item = context.MediaItems.Find(id);
             if (item == null) { return NotFound(); }
+            if (item.UserId != userId) { return Unauthorized(); }
 
             return Ok(item);
         }
@@ -36,7 +43,9 @@ namespace MediaTrackerAPI.Controllers
         [HttpGet("status/{status}")]
         public IActionResult GetByStatus(string status)
         {
-            var items = context.MediaItems.Where(x => x.Status == status).ToList();
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
+            var items = context.MediaItems.Where(x => x.Id == userId).Where(x => x.Status == status).ToList();
 
             return Ok(items);
         }
@@ -44,8 +53,11 @@ namespace MediaTrackerAPI.Controllers
         [HttpPost]
         public IActionResult Create(MediaItem item)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
+            item.UserId = userId;
             item.lastUpdated = DateTime.UtcNow;
 
             context.MediaItems.Add(item);
@@ -57,12 +69,16 @@ namespace MediaTrackerAPI.Controllers
         [HttpPut("{id}")]
         public IActionResult Update(int id, MediaItem updatedItem)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
             if (id != updatedItem.Id) { return BadRequest(); }
 
             var item = context.MediaItems.Find(id);
 
             if (item == null) { return NotFound(); }
+
+            if (item.UserId != userId) { return Unauthorized(); }
 
             item.Title = updatedItem.Title;
             item.MediaType = updatedItem.MediaType;
@@ -79,9 +95,13 @@ namespace MediaTrackerAPI.Controllers
         [HttpDelete("{id}")]
         public IActionResult Delete(int id)
         {
+            var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
+
             var item = context.MediaItems.Find(id);
 
             if (item == null) { return NotFound(); }
+
+            if (item.UserId != userId) { return Unauthorized(); }
 
             context.MediaItems.Remove(item);
             context.SaveChanges();

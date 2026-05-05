@@ -1,4 +1,5 @@
 ﻿using MediaTrackerAPI.Data;
+using MediaTrackerAPI.DTOs;
 using MediaTrackerAPI.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -51,14 +52,24 @@ namespace MediaTrackerAPI.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create(MediaItem item)
+        public IActionResult Create(CreateMediaDto dto)
         {
             var userId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier).Value);
 
             if (!ModelState.IsValid) { return BadRequest(ModelState); }
 
-            item.UserId = userId;
-            item.lastUpdated = DateTime.UtcNow;
+            var item = new MediaItem
+            {
+                Title = dto.Title,
+                MediaType = dto.MediaType,
+                Status = dto.Status,
+
+                Progress = "0%",
+                Notes = "",
+                ImageUrl = "",
+                UserId = userId,
+                lastUpdated = DateTime.UtcNow
+            };
 
             context.MediaItems.Add(item);
             context.SaveChanges();

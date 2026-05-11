@@ -23,6 +23,21 @@ function App() {
         fetchItems();
     }
 
+    const updateItem = async (id) => {
+        await API.put(`/media/${id}`, {
+            status: "Completed",
+            progress: "100%",
+            notes: "Finished"
+        });
+
+        fetchItems();
+    }
+
+    const deleteItem = async (id) =>{
+        await API.delete(`/media/${id}`);
+        fetchItems();
+    }
+
     const login = async () => {
         const res = await API.post("/auth/login", {
             username,
@@ -43,7 +58,12 @@ function App() {
 
             <ul>
                 {items.map(item => (
-                    <li key = {item.id}>{item.title}</li>
+                    <li key = {item.id}>
+                        {item.title}
+
+                        <button onClick={() => deleteItem(item.id)}>Delete</button>
+                        <button onClick={() => updateItem(item.id)}>Update</button>
+                    </li>
                 ))}
             </ul>
 
